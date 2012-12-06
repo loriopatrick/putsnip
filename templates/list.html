@@ -1,0 +1,30 @@
+{% block list %}
+    <div class="block list">
+        {% for snip in snips %}
+            <div class="item">
+                <div class="guts">
+                    <div class="stats">
+                        <div class="box">
+                            <span class="num">{{ snip.pointsK }}</span><br/>
+                            points
+                        </div>
+                        <div class="box">
+                            <span class="num">{{ snip.viewsK }}</span><br/>
+                            views
+                        </div>
+                    </div>
+                    <a href="/s/{{ snip.key }}">{{ snip.title }}</a>
+                </div>
+                <div class="bottom">
+                    <div class="tags">
+                        {{ snip.tags }}
+                    </div>
+                    <div class="info">
+                        <a href="/u/{{ snip.name }}">{{ snip.name }}</a><br/>
+                        {{ snip.datetime }}
+                        </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

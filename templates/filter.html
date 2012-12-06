@@ -1,0 +1,36 @@
+{% extends 'main.html' %}
+{% block left %}
+    <div class="block filter">
+        {% if tag %}
+            <span class="tag">{{ tag }}</span>
+        {% elif usr %}
+            user: {{ usr }}
+        {% endif %}
+        <form action="#" method="GET">
+            <label>sort by
+                <select name="sort">
+                    <option {% if date %}selected="selected"{% endif %}>date</option>
+                    <option {% if points %}selected="selected"{% endif %}>points</option>
+                    <option {% if views %}selected="selected"{% endif %}>views</option>
+                </select>
+            </label>
+            {#        <label>within#}
+            {#            <select>#}
+            {#                <option>a day</option>#}
+            {#                <option>a week</option>#}
+            {#                <option selected="true">a month</option>#}
+            {#                <option>a year</option>#}
+            {#                <option>a life</option>#}
+            {#            </select>#}
+            {#        </label>#}
+            <label>in
+                <select name="order">
+                    <option value="asc" {% if asc %}selected="selected"{% endif %}>ascending order</option>
+                    <option value="desc" {% if desc %}selected="selected"{% endif %}>descending order</option>
+                </select>
+            </label>
+            <input type="submit" value="update"/>
+        </form>
+    </div>
+    {% include 'list.html' %}
+{% endblock %}

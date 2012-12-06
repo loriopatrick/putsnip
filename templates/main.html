@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>{{ title }} | putsnip |</title>
+    <script type="text/javascript" src="/static/js/jquery-1.8.3.min.js"></script>
+
+    <script type="text/javascript" src="/static/js/jquery.tagsinput.js"></script>
+    <link rel="stylesheet" href="/static/css/jquery.tagsinput.css"/>
+    <script type="text/javascript" src="/static/lib/syntax/scripts/XRegExp.js"></script>
+    <script type="text/javascript" src="/static/lib/syntax/scripts/shCore.js"></script>
+    <script type="text/javascript" src="/static/lib/syntax/scripts/shAutoloader.js"></script>
+
+    <link rel="stylesheet" href="/static/lib/syntax/styles/shCore.css"/>
+    <link rel="stylesheet" href="/static/lib/syntax/styles/shThemeDefault.css"/>
+
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+<div id="main_container">
+    <div id="title">
+        <div id="logo">
+            <a href="/">put<span class="pink">snip</span></a>
+        </div>
+        <a href="/add" id="add_btn" onmouseover="$('#msg').html('Add Snippet');"
+           onmouseout="$('#msg').html('');"></a>
+
+        <div class="user">
+            {% if ac %}
+                <a href="/u/{{ ac.usr }}">{{ ac.usr }}</a> ::
+                <a href="/login">logout</a>
+            {% else %}
+                <a href="/login">login or register</a>
+            {% endif %}
+        </div>
+        <div id="msg" class="mini_info"></div>
+    </div>
+
+    <div id="left">
+        {% block left %}{% endblock %}
+    </div>
+
+    <div id="right">
+        {% block right %}
+            <span class="block_title">Advertisements (duh right?)</span>
+            <div class="block">Waiting for adsense approval :P</div>
+            <span class="block_title">Popular Tags</span>
+            <span class="mini_info">size:views (bigger=more), color:uses (red=more)</span>
+            <span class="block_space"></span>
+            <div class="block">To be implemented...</div>
+        {% endblock %}
+    </div>
+
+</div>
+<script type="text/javascript" src="/static/js/main.js"></script>
+</body>
+</html>

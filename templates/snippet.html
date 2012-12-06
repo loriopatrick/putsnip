@@ -1,0 +1,37 @@
+{% extends 'main.html' %}
+
+{% block left %}
+    <div class="block_title">
+        <div class="vote">
+            <a href="#" class="layer">
+                <img height="15"
+                     src="http://www.clker.com/cliparts/d/5/b/b/11949856281555500779tasto_4_architetto_franc_01.svg.med.png"
+                     alt="up vote"/>
+            </a>
+            <span class="layer">{{ snip.points }}</span>
+            <a href="#" class="layer">
+                <img height="15" src="http://www.antisocialmediallc.com/wp-content/uploads/2012/02/Down-Arrow-Photo.png"
+                     alt="down vote">
+            </a>
+        </div>
+        <span style="padding: 15px 5px;float:left;">
+            {% firstof snip.title 'Untitled' %}
+        </span>
+    </div>
+    <div class="block" style="font-size: 14px; margin-left: -15px;">
+        <script type="syntaxhighlighter" class="brush: {% firstof snip.lan 'plain' %}">
+            <![CDATA[{{ snip.code|safe }}]]>
+        </script>
+
+    </div>
+    <span class="mini_info">
+        Submitted by <a href="/u/{{ snip.name }}">{{ snip.name }}</a>, datetime: {{ snip.datetime }}<br/>
+        {{ snip.points }} points, {{ snip.views }} views
+    </span>
+    <span class="block_space"></span>
+
+    <div class="block_title">tags</div>
+    <div class="block tags">
+        {% firstof snip.tags 'none' %}
+    </div>
+{% endblock %}

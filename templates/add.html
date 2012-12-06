@@ -1,0 +1,80 @@
+{% extends 'main.html' %}
+{% block left %}
+    <form action="#" method="POST">{% csrf_token %}
+        <span class="block_title"><label for="title">create a title for the snippet</label></span>
+
+        <div class="block" style="width: 450px;">
+            <input type="text" id="title" name="title" placeholder="something appropriate"
+                   style="border: dashed 1px #a3a3a3;"/>
+        </div>
+
+        <span class="block_title"><label for="snip">putSnip below</label></span>
+        {% if nocode %}
+            <span class="block warning">code is required dummy</span>
+        {% endif %}
+        <div class="block">
+            <textarea id="snip" name="snip" placeholder="feed me that tasty code snippet"></textarea>
+        </div>
+        <span class="block_space"></span>
+
+        <span class="block_title"><label for="lan">select language</label></span>
+
+        <div class="block">
+            <select id="lan" name="lan">
+                <option>Apple Script</option>
+                <option>Action Script 3</option>
+                <option value="bash">Bash / Shell</option>
+                <option>Cold Fusion</option>
+                <option>C</option>
+                <option value="cpp">C++</option>
+                <option>C#</option>
+                <option>CSS</option>
+                <option>Delphi</option>
+                <option>Diff</option>
+                <option>Erlang</option>
+                <option>Groovy</option>
+                <option>HTML</option>
+                <option>Java</option>
+                <option value="Java_FX">Java FX</option>
+                <option>Javascript</option>
+                <option>Perl</option>
+                <option>PHP</option>
+                <option selected="selected" value="plain">Plain Text</option>
+                <option>Python</option>
+                <option>Ruby</option>
+                <option>Scala</option>
+                <option>Sql</option>
+                <option value="vb">Visual Basic</option>
+                <option>XML</option>
+            </select>
+        </div>
+        <span class="block_space"></span>
+        <span class="block_title"><label for="tags">add some tags</label></span>
+
+        <div class="block">
+            <input id="tags" name="tags"/>
+        </div>
+
+        <span class="block_space"></span>
+        <button class="submit"><img src="/static/img/add_over.jpg"> PutSnip</button>
+    </form>
+    <script type="text/javascript">
+        $(document).delegate('#snip', 'keydown', function (e) {
+            var keyCode = e.keyCode || e.which;
+            if (keyCode == 9) {
+                e.preventDefault();
+                var start = $(this).get(0).selectionStart;
+                var end = $(this).get(0).selectionEnd;
+                $(this).val($(this).val().substring(0, start)
+                        + "\t"
+                        + $(this).val().substring(end));
+                $(this).get(0).selectionStart =
+                        $(this).get(0).selectionEnd = start + 1;
+            }
+        });
+        $('#tags').tagsInput({
+            width:'450px',
+            height:'20px'
+        });
+    </script>
+{% endblock %}

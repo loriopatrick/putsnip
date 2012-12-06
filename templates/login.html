@@ -1,0 +1,36 @@
+{% extends 'main.html' %}
+
+{% block left %}
+    <div class="block warning">
+        {{ error|safe }}
+    </div>
+    <div class="block" style="width: 50%; clear:none;">
+        <span class="block_title">Register</span>
+
+        <form action="#" method="POST" style="font-size: 12px;">{% csrf_token %}
+            <input type="hidden" name="type" value="create" />
+            <label>username:<br/><input type="text" name="user"/></label><br/>
+            <label>email (optional):<br/><input type="text" name="email"/></label><br/>
+            <label>password:<br/><input type="password" name="pass"/></label><br/>
+            <label>verify password:<br/><input type="password" name="pass_verify"/></label><br/>
+            <input type="submit" value="Create Account"/>
+        </form>
+    </div>
+    <div class="block" style="width: 50%; clear:none;">
+        <span class="block_title">Login</span>
+
+        <form action="#" method="POST" style="font-size: 12px;">{% csrf_token %}
+            <input type="hidden" name="type" value="login" />
+            <label>username:<br/><input type="text" name="user"/></label><br/>
+            <label>password:<br/><input type="password" name="pass"/></label><br/>
+            <input type="submit" value="Login"/>
+        </form>
+    </div>
+    <span class="block_space"></span>
+    <span class="block_title">Why join?</span>
+    <div class="block" style="font-size: 14px;">
+        Up and down vote code snippets. Help decipher snips that can improve developers' life.
+        In addition you, you yourself can commit to the site. Is your code with a damn? Do you
+        have something worth sharing? Lets find out.
+    </div>
+{% endblock %}
