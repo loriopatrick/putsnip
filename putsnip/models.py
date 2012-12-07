@@ -1,33 +1,120 @@
 import base
 from django.db import models
 
+#todo: remove possibilities for sql injections in root sql construction methods
+
 class Snip(models.Model):
     """
     Store the code snippet
     PutSnip !!!
     """
     id = models.AutoField(primary_key=True)
+    usr = models.CharField(max_length=50)
     title = models.CharField(max_length=100)
     code = models.TextField()
     lan = models.CharField(max_length=30)
-    name = models.CharField(max_length=50)
+    desc = models.TextField(max_length=2048)
     datetime = models.DateTimeField(auto_now_add=True)
     views = models.IntegerField(default=0)
 
     @staticmethod
-    def get_trending ():
+    def get_snip_by_points_query (pool='putsnip_snip', score='1', order='DESC'):
         """
-        sums votes with score of 1/age for each snippet
+        sums votes with score of definable value for each snippet
         sorts by score
         """
-        return Snip.objects.raw('SELECT putsnip_snip.* FROM putsnip_snip INNER JOIN (\
-            SELECT putsnip_vote.snip FROM putsnip_vote GROUP BY snip ORDER BY \
-            sum( 1 / (UNIX_TIMESTAMP(now())-UNIX_TIMESTAMP(date))) DESC \
-        ) putsnip_vote on putsnip_vote.snip = putsnip_snip.id')
+        if score == '1':
+            return '''
+            SELECT * FROM %s INNER JOIN (
+                SELECT snip, count(*) AS score FROM putsnip_vote
+                WHERE up = 1
+                GROUP BY snip
+                ORDER BY score %s
+            ) tbl on tbl.snip = id
+            ''' % (pool, order)
+
+        return '''
+        SELECT * FROM %s INNER JOIN (
+            SELECT snip, sum(%s) AS score FROM putsnip_vote
+            WHERE up = 1
+            GROUP BY snip
+            ORDER BY score %s
+        ) tbl on tbl.snip = id
+        ''' % (pool, score, order)
+
+    @staticmethod
+    def get_trending_score_sql ():
+        return '1 / ( UNIX_TIMESTAMP(now()) - UNIX_TIMESTAMP(datetime) )'
+
+    @staticmethod
+    def get_trending (pool='putsnip_snip', order='DESC'):
+        """
+        uses score of 1 / age to get trending
+        """
+        return Snip.objects.raw(Snip.get_snip_by_points_query(pool=pool, order=order,
+            score=Snip.get_trending_score_sql()))
 
     @staticmethod
     def get_snip (key):
         return Snip.objects.get(id=base.decode(key))
+
+    @staticmethod
+    def get_snip_by_tag_query (tags, all=False):
+        """
+        gets putsnip_tag ids
+        gets connections with ids
+        gets snips that link with connections
+        if all: requires snips to have connections to all tags
+        appends order to end of query
+        """
+        con = ''
+        if all:
+            con = 'HAVING COUNT(tag) = %s' % len(tags)
+
+        return '''
+        SELECT * FROM putsnip_snip WHERE id IN(
+            SELECT snip FROM putsnip_tagconnection WHERE tag IN (
+                SELECT id FROM putsnip_tag WHERE name IN (%s)
+            ) GROUP BY snip %s
+        )
+        ''' % (('"' + '","'.join(tags) + '"'), con)
+
+    @staticmethod
+    def get_snip_by_tags (tags, all=False, order=''):
+        """
+        executes query from _get_snip_by_tag_query and returns snips
+        """
+        return Snip.objects.raw(Snip.get_snip_by_tag_query(tags, all) + order)
+
+    @staticmethod
+    def super_filter (tags = None, all_tags=False, user='', sort='hot', order='DESC'):
+        """
+        sort = {hot, views, date, points}
+        """
+        if tags:
+            tag_query = Snip.get_snip_by_tag_query(tags, all_tags)
+            if len(user):
+                tag_query += ' AND usr="%s"' % user
+            if sort == 'hot':
+                return Snip.get_trending(tag_query, order)
+            if sort == 'points':
+                return Snip.objects.raw(Snip.get_snip_by_points_query(tag_query, order=order))
+            if sort == 'views' or sort == 'date':
+                return Snip.objects.raw(tag_query + (' ORDER BY %s %s' % (sort, order)))
+        else:
+            if sort == 'hot' or sort == 'points':
+                con = ''
+                if len(user):
+                    con = ' WHERE usr="%s"' % user
+
+                score = '1'
+                if sort == 'hot':
+                    score = Snip.get_trending_score_sql()
+
+                return Snip.objects.raw(Snip.get_snip_by_points_query(score=score, order=order) + con)
+
+            if sort == 'views' or sort == 'date':
+                return Snip.objects.raw('SELECT * FROM putsnip_snip ORDER BY %s %s' % (sort, order))
 
     def get_points(self):
         """
@@ -40,15 +127,47 @@ class Snip(models.Model):
                 - Vote.objects.filter(snip=self.id, up=False).count(), 0)
         return self.points
 
+
+    def vote(self, usr, up=True):
+        """
+        if exact same vote, remove
+        if opposite, update
+        if new, add
+        """
+        vote = Vote.objects.filter(snip=self.id, usr=usr)
+        if vote.count() > 0:
+            vote = vote.get()
+            if vote.up == up:
+                vote.delete()
+                if up:
+                    self.points = self.get_points() - 1
+                else:
+                    self.points = self.get_points() + 1
+                return
+            vote.up = up
+            vote.save()
+            if up:
+                self.points = self.get_points() + 2
+            else:
+                self.points = self.get_points() - 2
+            return
+        vote = Vote(snip=self.id, usr=usr, up=up)
+        vote.save()
+        if up:
+            self.point = self.get_points() + 1
+        else:
+            self.point = self.get_points() - 1
+
+
     def get_tags (self):
         """
         goes through TagConnections and gets connections with self's snippet id
         finds tags that correspond with found TagConnections
         """
         if not hasattr(self, 'tags_data'):
-            self.tags_data = Tag.objects.raw('SELECT putsnip_tag.* FROM putsnip_tag INNER JOIN( \
-                SELECT DISTINCT putsnip_tags.tag FROM putsnip_tags WHERE putsnip_tags.snip = "%s" \
-            ) putsnip_tags on putsnip_tags.tag = putsnip_tag.id' % self.id)[0:20]
+            self.tags_data = Tag.objects.raw('''SELECT putsnip_tag.* FROM putsnip_tag INNER JOIN( \
+                SELECT DISTINCT tag FROM putsnip_tagconnection WHERE snip="%s" \
+            ) tbl on tbl.tag = putsnip_tag.id''' % self.id)[0:20]
         return self.tags_data
 
     def get_tags_str (self):
@@ -61,7 +180,7 @@ class Snip(models.Model):
             tags = self.get_tags()
             for tag in tags:
                 r.append(tag.name)
-            self.tags = ','.join(tags)
+            self.tags = ','.join(r)
         return self.tags
 
     def update_text_numbers (self):
@@ -100,7 +219,7 @@ class Account(models.Model):
     email = models.CharField(max_length=255)
     pwd = models.CharField(max_length=32, null=False)
     datetime = models.DateTimeField(auto_now_add=True)
-    points = models.IntegerField(default=0)
+    points = models.IntegerField(default=-1)
 
 
 class Vote(models.Model):
@@ -124,9 +243,9 @@ class Tag(models.Model):
             tags = tags.split(',')
         for t in tags:
             tag = Tag(name=t)
-            if tag.objects.count() > 0:
-                tag.objects.get()
-                if TagConnection(snip=snip, tag=tag.id).objects.count() > 0:
+            if Tag.objects.filter(name=t).count() > 0:
+                tag = Tag.objects.get(name=t)
+                if TagConnection.objects.filter(snip=snip, tag=tag.id).count() > 0:
                     return
             else:
                 tag.save()
@@ -138,9 +257,3 @@ class Tag(models.Model):
 class TagConnection(models.Model):
     snip = models.IntegerField()
     tag = models.IntegerField()
-
-    def get_snip(self):
-        return Snip(id=self.snip).objects.get()
-
-    def get_tag(self):
-        return Tag(id=self.tag).objects.all()

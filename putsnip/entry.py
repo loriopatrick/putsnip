@@ -1,6 +1,3 @@
-import base
-import analyze
-
 from hashlib import md5
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
@@ -15,7 +12,7 @@ tags = [
         {'name':'plain','size':'24','color':'255'}
 ]
 
-def ready_context (request, current, post=False):
+def ready_context (request, current={}, post=False):
     current.update({
         'ac':request.session.get('ac', ''),
         'tags':tags
@@ -24,9 +21,11 @@ def ready_context (request, current, post=False):
         current.update(csrf(request))
     return current
 
-def view_snips (snips):
+def ready_snips (snips):
     for snip in snips:
-        snip.add_text_numbers()
+        snip.update_text_numbers()
+        snip.get_tags_str()
+        snip.get_key()
     return snips
 
 def snippet(request, key):
@@ -36,7 +35,8 @@ def snippet(request, key):
         return HttpResponse('Snip does not exist.')
 
     snip.add_view()
-    snip.get_tags()
+    snip.get_tags_str()
+    snip.get_points()
 
     return render_to_response('snippet.html',
         ready_context(request, {'snip':snip}))
@@ -50,17 +50,15 @@ def add(request):
     if not request.session.get('ac', False):
         return HttpResponseRedirect('/login?error=requires account, register or login')
 
-    c = csrf(request)
-
     if request.method == 'POST':
         snip = models.Snip()
 
         if not len(request.POST['snip']):
-            c.update({'nocode':'1'})
-            return render_to_response('add.html', ready_context(request, c))
+            return render_to_response('add.html', ready_context(request, {'nocode':'1'}, True))
 
         # replace strange character I was getting an error with
-        snip.code = str(request.POST['snip'].replace(u'\u200b', ' '))
+        snip.code = request.POST['snip'].replace(u'\u200b', ' ')
+        snip.desc = request.POST['desc'].replace(u'\u200b', ' ')
 
         snip.title = request.POST['title']
         if not len(snip.title):
@@ -70,9 +68,12 @@ def add(request):
             request.POST['lan'] = 'plain'
         snip.lan = request.POST['lan'].replace(' ', '').lower()
 
-        snip.name = request.session.get('ac').usr
+        account = request.session.get('ac')
+        snip.usr = account.usr
 
         snip.save()
+
+        snip.vote(usr=account.id)
 
         # add tags & connections
         tags = [snip.lan]
@@ -82,7 +83,7 @@ def add(request):
 
         return HttpResponseRedirect('/s/' + snip.get_key())
 
-    return render_to_response('add.html', ready_context(request, c))
+    return render_to_response('add.html', ready_context(request, post=True))
 
 sortkey = {
     'points':'points',
@@ -97,27 +98,25 @@ def filter(request, filter, key):
         c['snips'] = models.Snip.objects.filter(name__exact=key)
         c.update({'name':key})
     elif filter == 't':
-        c['snips'] = models.Snip.objects.filter(tags__contains=key)
+        c['snips'] = models.Snip.get_snip_by_tags(tags=['plain', 'test'], all=True)[0:50]
         c.update({'tag':key})
 
-    sort = sortkey[request.GET.get('sort', 'points')]
-    order = request.GET.get('order', 'desc')
-    c.update({sort:'1', order:'1'})
+#    sort = sortkey[request.GET.get('sort', 'points')]
+#    order = request.GET.get('order', 'desc')
+#    c.update({sort:'1', order:'1'})
+#
+#    c['snips'] = c['snips'].order_by(sort)
+#    if order == 'desc':
+#        c['snips'] = c['snips'].reverse()[0:50]
+#    else:
+#        c['snips'] = c['snips'][0:50]
 
-    c['snips'] = c['snips'].order_by(sort)
-    if order == 'desc':
-        c['snips'] = c['snips'].reverse()[0:50]
-    else:
-        c['snips'] = c['snips'][0:50]
-
-    view_snips(c['snips'])
+    ready_snips(c['snips'])
 
     return render_to_response('filter.html', ready_context(request, c))
 
 def index(request):
-    c = {'snips': analyze.get_trending_snips()[0:10]}
-    c['snips'] = view_snips(c['snips'])
-    print c['snips']
+    c = {'snips': ready_snips(models.Snip.super_filter()[0:10])}
     return render_to_response('filter.html', ready_context(request, c))
 
 def login(request):
