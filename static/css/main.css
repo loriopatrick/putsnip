@@ -1,5 +1,5 @@
 body {
-    font-family: Tahoma;
+    font-family: Tahoma, Geneva, Verdana;
 }
 
 a {
@@ -67,8 +67,8 @@ a:hover#add_btn {
     background: url('/static/img/add_over.jpg') no-repeat center;
 }
 
-.pink {
-    color: pink;
+.special {
+    color: #b4f3ff;
 }
 
 .block {

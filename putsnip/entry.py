@@ -1,4 +1,6 @@
 import base
+import analyze
+
 from hashlib import md5
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
@@ -6,38 +8,38 @@ from django.core.context_processors import csrf
 from django.db import IntegrityError
 from putsnip import models
 
-def reference (request, current):
-    current.update({'ac':request.session.get('ac', '')})
-    return current
+tags = [
+        {'name':'plain','size':'24','color':'255'},
+        {'name':'plain','size':'24','color':'255'},
+        {'name':'plain','size':'24','color':'255'},
+        {'name':'plain','size':'24','color':'255'}
+]
 
-def simpnum (num):
-    temp = round(num / 1000000, 1)
-    if temp >= 1:
-        return '%iM' % temp
-    temp = round(num / 1000, 1)
-    if temp >= 1:
-        return '%ik' % temp
-    return '%i' % num
+def ready_context (request, current, post=False):
+    current.update({
+        'ac':request.session.get('ac', ''),
+        'tags':tags
+    })
+    if post:
+        current.update(csrf(request))
+    return current
 
 def view_snips (snips):
     for snip in snips:
-        snip.pointsK = simpnum(snip.points)
-        snip.viewsK = simpnum(snip.views)
-        snip.key = base.encode(snip.id)
+        snip.add_text_numbers()
     return snips
 
 def snippet(request, key):
     try:
-        snip = models.Snip.objects.get(id=base.decode(key))
+        snip = models.Snip.get_snip(key)
     except Exception:
-        return HttpResponse('Didn\'t find the snippet.')
+        return HttpResponse('Snip does not exist.')
 
-    snip.views += 1
-    snip.save()
+    snip.add_view()
+    snip.get_tags()
 
-    return render_to_response('snippet.html', reference(request, {
-        'snip':snip
-    }))
+    return render_to_response('snippet.html',
+        ready_context(request, {'snip':snip}))
 
 def unique(seq):
     seen = set()
@@ -55,8 +57,9 @@ def add(request):
 
         if not len(request.POST['snip']):
             c.update({'nocode':'1'})
-            return render_to_response('add.html', reference(request, c))
+            return render_to_response('add.html', ready_context(request, c))
 
+        # replace strange character I was getting an error with
         snip.code = str(request.POST['snip'].replace(u'\u200b', ' '))
 
         snip.title = request.POST['title']
@@ -65,22 +68,21 @@ def add(request):
 
         if not len(request.POST['lan']):
             request.POST['lan'] = 'plain'
-
         snip.lan = request.POST['lan'].replace(' ', '').lower()
-
-        if len(request.POST['tags']) > 0:
-            snip.tags = ','.join(unique(('%s,%s' % (request.POST['lan'], request.POST['tags'])).lower().split(',')))
-        else:
-            snip.tags = request.POST['lan'].lower()
-
 
         snip.name = request.session.get('ac').usr
 
         snip.save()
 
-        return HttpResponseRedirect('/s/' + base.encode(snip.id))
+        # add tags & connections
+        tags = [snip.lan]
+        if len(request.POST['tags']) > 0:
+            tags.extend(request.POST['tags'].lower().split(','))
+        models.Tag.add_tags(snip.id, tags)
 
-    return render_to_response('add.html', reference(request, c))
+        return HttpResponseRedirect('/s/' + snip.get_key())
+
+    return render_to_response('add.html', ready_context(request, c))
 
 sortkey = {
     'points':'points',
@@ -90,8 +92,6 @@ sortkey = {
 
 def filter(request, filter, key):
     c = {'snips':None}
-
-
 
     if filter == 'u':
         c['snips'] = models.Snip.objects.filter(name__exact=key)
@@ -112,24 +112,13 @@ def filter(request, filter, key):
 
     view_snips(c['snips'])
 
-    return render_to_response('filter.html', reference(request, c))
+    return render_to_response('filter.html', ready_context(request, c))
 
 def index(request):
-    c = {'snips': models.Snip.objects.all()}
-
-    sort = sortkey[request.GET.get('sort', 'points')]
-    order = request.GET.get('order', 'desc')
-    c.update({sort:'1', order:'1'})
-
-    c['snips'] = c['snips'].order_by(sort)
-    if order == 'desc':
-        c['snips'] = c['snips'].reverse()[0:50]
-    else:
-        c['snips'] = c['snips'][0:50]
-
-    view_snips(c['snips'])
-
-    return render_to_response('filter.html', reference(request, c))
+    c = {'snips': analyze.get_trending_snips()[0:10]}
+    c['snips'] = view_snips(c['snips'])
+    print c['snips']
+    return render_to_response('filter.html', ready_context(request, c))
 
 def login(request):
     c = csrf(request)
@@ -137,7 +126,7 @@ def login(request):
     if request.GET.get('error', False):
         c.update({'error':request.GET['error']})
 
-    if request.session['ac'] is not None:
+    if request.session.get('ac', None) is not None:
         c.update({'error':'logged out'})
         request.session['ac'] = None
 

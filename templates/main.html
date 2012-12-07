@@ -20,7 +20,7 @@
 <div id="main_container">
     <div id="title">
         <div id="logo">
-            <a href="/">put<span class="pink">snip</span></a>
+            <a href="/">put<span class="special">snip</span></a>
         </div>
         <a href="/add" id="add_btn" onmouseover="$('#msg').html('Add Snippet');"
            onmouseout="$('#msg').html('');"></a>
@@ -45,9 +45,9 @@
             <span class="block_title">Advertisements (duh right?)</span>
             <div class="block">Waiting for adsense approval :P</div>
             <span class="block_title">Popular Tags</span>
-            <span class="mini_info">size:views (bigger=more), color:uses (red=more)</span>
-            <span class="block_space"></span>
-            <div class="block">To be implemented...</div>
+            <div class="block">
+                {% include 'tags.html' %}
+            </div>
         {% endblock %}
     </div>
 
