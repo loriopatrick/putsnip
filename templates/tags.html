@@ -1,3 +1,53 @@
-{% for tag in tags_trend %}
-    <a href="/t/{{ tag.name }}" style="font-weight: bold;font-size: {{ tag.size }}px; color: rgb(255, 0, {{ tag.color }});">{{ tag.name }}</a>
-{% endfor %}
+<div id="pop_tags">
+    {% for tag in tags_trend %}
+        <a href="/t/{{ tag.name }}" style="font-weight: bold; font-size: {{ tag.size }}px;">{{ tag.name }}</a>
+    {% endfor %}
+</div>
+<script type="text/javascript">
+    (function () {
+        function getSize (item) {
+            return parseInt(item.style.fontSize.replace('px', ''));
+        }
+
+        var container = document.getElementById('pop_tags');
+        var items = Array.prototype.slice.call(container.children).splice(0);
+        var max_size = 0;
+        var target_max = 60;
+        var l = items.length - 1;
+        var i = 0;
+
+        for (i = 0; i < items.length; ++i) {
+            var child = items[i];
+            var size = getSize(child);
+            if (size > max_size) {
+                max_size = size;
+            }
+            var r = Math.round(Math.random() * (items.length - i - 1) + i);
+            items[i] = items[r];
+            items[r] = child;
+        }
+
+        for (i = 0; i < items.length; ++i) {
+            var child = items[i];
+            var size = getSize(child);
+            child.style.fontSize = target_max * size / max_size + 'px';
+            container.appendChild(items[i]);
+        }
+
+        return;
+
+        for (i = l; i > 0; --i) {
+            var r = Math.random() * i;
+            var child = items[i];
+            var size = parseInt(child.style
+                    .fontSize.replace('px', ''));
+            child.style.fontSize = target_max * size / max_size + 'px';
+//            var temp = items[i];
+//            items[i] = items[r];
+//            items[r] = temp;
+        }
+        for (i = 0; i < items.length; ++i) {
+//            container.appendChild(items[i]);
+        }
+    })();
+</script>

@@ -161,10 +161,10 @@ input {
 }
 
 .stats .up {
-    background-color: #ffd3d5;
+    color: #ffa500;
 }
 .stats .down {
-    background-color: #d3f1ff;
+    color: #0095ff;
 }
 
 .stats .box {
@@ -246,4 +246,13 @@ input {
 .edge {
     border-bottom: solid 3px #000000;
     margin-bottom: 10px;
+}
+
+#pop_tags a {
+    float: left;
+    padding: 5px;
+}
+
+body .syntaxhighlighter .line {
+    white-space: pre-wrap !important; /* make code wrap */
 }

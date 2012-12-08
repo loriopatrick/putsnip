@@ -16,14 +16,14 @@
         </span>
     </div>
     <div class="block" style="font-size: 14px; margin-left: -15px;">
-        <script type="syntaxhighlighter" class="brush: {% firstof snip.lan 'plain' %}">
+        <script type="syntaxhighlighter" class="wrap brush: {% firstof snip.lan 'plain' %}">
             <![CDATA[{{ snip.code|safe }}]]>
         </script>
     </div>
     {% if snip.desc %}
         <div class="block" style="padding: 5px 5px; font-size: 14px; background-color: #f7f7f7;">
             <span class="mini_info" style="font-weight: bold;">description</span><br/>
-            <pre style="">{{ snip.desc }}</pre>
+            <pre class="wrap">{{ snip.desc }}</pre>
         </div>
         <span class="block_space"></span>
     {% endif %}

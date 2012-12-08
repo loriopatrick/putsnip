@@ -54,9 +54,6 @@ class Snip(models.Model):
         """
         uses score of 1 / age to get trending
         """
-        print Snip.get_snip_by_points_query(pool=pool, order=order,
-            score=Snip.get_trending_score_sql())
-
         return Snip.objects.raw(Snip.get_snip_by_points_query(pool=pool, nested_pool=nested_pool, order=order,
             score=Snip.get_trending_score_sql()))
 
@@ -270,6 +267,16 @@ class Tag(models.Model):
                 tag.save()
 
             TagConnection(snip=snip, tag=tag.id).save()
+
+    @staticmethod
+    def get_pop_tags ():
+        return Tag.objects.raw('''
+        SELECT *, size AS size FROM putsnip_tag INNER JOIN (
+            SELECT id, (LOG(COUNT(snip)) + 1) AS size FROM putsnip_tagconnection
+            GROUP BY tag
+            ORDER BY size DESC
+        ) tbl ON tbl.id = putsnip_tag.id
+        ''')
 
 
 

@@ -7,17 +7,10 @@ from putsnip import models
 
 #todo: fix error: http://localhost:8080/?at=n&tags=&usr=&sort=datetime&or=a#
 
-tags = [
-        {'name': 'plain', 'size': '24', 'color': '255'},
-        {'name': 'plain', 'size': '24', 'color': '255'},
-        {'name': 'plain', 'size': '24', 'color': '255'},
-        {'name': 'plain', 'size': '24', 'color': '255'}
-]
-
 def ready_context(request, current={}, post=False):
     current.update({
         'ac': request.session.get('ac', None),
-        'tags_trend': tags
+        'tags_trend': models.Tag.get_pop_tags()[:20]
     })
     if post:
         current.update(csrf(request))
@@ -60,7 +53,7 @@ def unique(seq):
 
 def add(request):
     if not request.session.get('ac', False):
-        return HttpResponseRedirect('/login?error=requires account, register or login')
+        return HttpResponseRedirect('/login?error=requires account, register or login&redirect=/add')
 
     if request.method == 'POST':
         snip = models.Snip()
@@ -158,7 +151,7 @@ def redirect(request, type, key):
     if type == 'uv' or type == 'dv':
         ac = request.session.get('ac', None)
         if ac is None:
-            return HttpResponseRedirect('/login?error=voting requires login')
+            return HttpResponseRedirect('/login?error=voting requires login&redirect=/s/%s' % key)
         models.Snip.get_snip(key).vote(usr=ac.id, up=(type == 'uv'))
         return HttpResponseRedirect('/s/' + key)
     if type == 't':
@@ -189,7 +182,7 @@ def login(request):
 
         def success(ac):
             request.session['ac'] = ac
-            return HttpResponseRedirect('/')
+            return HttpResponseRedirect(request.GET.get('redirect', '/'))
 
         t = request.POST['type']
 
