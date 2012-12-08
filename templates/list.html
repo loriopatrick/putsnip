@@ -4,7 +4,7 @@
             <div class="item">
                 <div class="guts">
                     <div class="stats">
-                        <div class="box">
+                        <div class="box {% if snip.my_vote == 1 %}up{% elif snip.my_vote == -1 %}down{% endif %}">
                             <span class="num">{{ snip.pointsK }}</span><br/>
                             points
                         </div>

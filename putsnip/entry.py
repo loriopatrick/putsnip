@@ -5,28 +5,34 @@ from django.core.context_processors import csrf
 from django.db import IntegrityError
 from putsnip import models
 
+#todo: fix error: http://localhost:8080/?at=n&tags=&usr=&sort=datetime&or=a#
+
 tags = [
-        {'name':'plain','size':'24','color':'255'},
-        {'name':'plain','size':'24','color':'255'},
-        {'name':'plain','size':'24','color':'255'},
-        {'name':'plain','size':'24','color':'255'}
+        {'name': 'plain', 'size': '24', 'color': '255'},
+        {'name': 'plain', 'size': '24', 'color': '255'},
+        {'name': 'plain', 'size': '24', 'color': '255'},
+        {'name': 'plain', 'size': '24', 'color': '255'}
 ]
 
-def ready_context (request, current={}, post=False):
+def ready_context(request, current={}, post=False):
     current.update({
-        'ac':request.session.get('ac', ''),
-        'tags':tags
+        'ac': request.session.get('ac', None),
+        'tags_trend': tags
     })
     if post:
         current.update(csrf(request))
     return current
 
-def ready_snips (snips):
+
+def ready_snips(snips, ac=None):
     for snip in snips:
         snip.update_text_numbers()
         snip.get_tags_str()
         snip.get_key()
+        if ac:
+            snip.get_vote(usr=ac.id)
     return snips
+
 
 def snippet(request, key):
     try:
@@ -35,16 +41,22 @@ def snippet(request, key):
         return HttpResponse('Snip does not exist.')
 
     snip.add_view()
+    snip.get_key()
     snip.get_tags_str()
     snip.get_points()
+    ac = request.session.get('ac', None)
+    if ac:
+        snip.get_vote(usr=ac.id)
 
     return render_to_response('snippet.html',
-        ready_context(request, {'snip':snip}))
+        ready_context(request, {'snip': snip}))
+
 
 def unique(seq):
     seen = set()
     seen_add = seen.add
-    return [ x for x in seq if x not in seen and not seen_add(x)]
+    return [x for x in seq if x not in seen and not seen_add(x)]
+
 
 def add(request):
     if not request.session.get('ac', False):
@@ -54,7 +66,7 @@ def add(request):
         snip = models.Snip()
 
         if not len(request.POST['snip']):
-            return render_to_response('add.html', ready_context(request, {'nocode':'1'}, True))
+            return render_to_response('add.html', ready_context(request, {'nocode': '1'}, True))
 
         # replace strange character I was getting an error with
         snip.code = request.POST['snip'].replace(u'\u200b', ' ')
@@ -86,56 +98,99 @@ def add(request):
     return render_to_response('add.html', ready_context(request, post=True))
 
 sortkey = {
-    'points':'points',
-    'views':'views',
-    'date':'datetime'
+    'points': 'points',
+    'views': 'views',
+    'date': 'datetime'
 }
 
-def filter(request, filter, key):
-    c = {'snips':None}
+def filter(request):
+    c = {'snips': None}
+    get = request.GET.get
 
-    if filter == 'u':
-        c['snips'] = models.Snip.objects.filter(name__exact=key)
-        c.update({'name':key})
-    elif filter == 't':
-        c['snips'] = models.Snip.get_snip_by_tags(tags=['plain', 'test'], all=True)[0:50]
-        c.update({'tag':key})
+    page = int(get('page', '0'))
+    dir = get('dir', None)
+    if dir == 'previous':
+        page = max(page - 1, 0)
+    elif dir == 'next':
+        page += 1
 
-#    sort = sortkey[request.GET.get('sort', 'points')]
-#    order = request.GET.get('order', 'desc')
-#    c.update({sort:'1', order:'1'})
-#
-#    c['snips'] = c['snips'].order_by(sort)
-#    if order == 'desc':
-#        c['snips'] = c['snips'].reverse()[0:50]
-#    else:
-#        c['snips'] = c['snips'][0:50]
+    items = min(max(int(get('n', '50')), 5), 70)
 
-    ready_snips(c['snips'])
+    def split(tags):
+        if tags is None or not len(tags):
+            return None
+        return tags.split(',')
+
+    sort = {'hot': 'hot',
+            'points': 'points',
+            'views': 'views',
+            'datetime': 'datetime'}[get('sort', 'hot')]
+
+    order = {'d': 'DESC', 'a': 'ASC'}[get('or', 'd')]
+
+    c['snips'] = models.Snip.super_filter(
+        tags=split(get('tags', None)),
+        all_tags=get('at', 'n') == 'y',
+        user=get('usr', ''),
+        sort=sort,
+        order=order
+    )[items * page:items * (page + 1)]
+
+    ready_snips(c['snips'], request.session.get('ac', None))
+
+    c.update({
+        'tags': get('tags', ''),
+        'usr': get('usr', ''),
+        sort: '1',
+        order: '1',
+        'page': page
+    })
+
+    if get('at', 'n') == 'y':
+        c.update({'ht': '1'})
+    else:
+        c.update({'ct': '1'})
 
     return render_to_response('filter.html', ready_context(request, c))
+
+
+def redirect(request, type, key):
+    if type == 'uv' or type == 'dv':
+        ac = request.session.get('ac', None)
+        if ac is None:
+            return HttpResponseRedirect('/login?error=voting requires login')
+        models.Snip.get_snip(key).vote(usr=ac.id, up=(type == 'uv'))
+        return HttpResponseRedirect('/s/' + key)
+    if type == 't':
+        return HttpResponseRedirect('/?tags=%s' % key)
+    if type == 'u':
+        return HttpResponseRedirect('/?usr=%s' % key)
+
 
 def index(request):
     c = {'snips': ready_snips(models.Snip.super_filter()[0:10])}
     return render_to_response('filter.html', ready_context(request, c))
 
+
 def login(request):
     c = csrf(request)
 
     if request.GET.get('error', False):
-        c.update({'error':request.GET['error']})
+        c.update({'error': request.GET['error']})
 
     if request.session.get('ac', None) is not None:
-        c.update({'error':'logged out'})
+        c.update({'error': 'logged out'})
         request.session['ac'] = None
 
     if request.method == 'POST':
-        def error (msg):
-            c.update({'error':msg})
+        def error(msg):
+            c.update({'error': msg})
             return render_to_response('login.html', c)
-        def success (ac):
+
+        def success(ac):
             request.session['ac'] = ac
             return HttpResponseRedirect('/')
+
         t = request.POST['type']
 
         if t == 'create':

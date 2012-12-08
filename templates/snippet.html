@@ -3,15 +3,12 @@
 {% block left %}
     <div class="block_title">
         <div class="vote">
-            <a href="#" class="layer">
-                <img height="15"
-                     src="http://www.clker.com/cliparts/d/5/b/b/11949856281555500779tasto_4_architetto_franc_01.svg.med.png"
-                     alt="up vote"/>
+            <a href="/uv/{{ snip.key }}" class="layer">
+                <img src="/static/img/up{% if snip.my_vote == 1 %}_over{% endif %}.jpg" alt="down vote">
             </a>
             <span class="layer">{{ snip.points }}</span>
-            <a href="#" class="layer">
-                <img height="15" src="http://www.antisocialmediallc.com/wp-content/uploads/2012/02/Down-Arrow-Photo.png"
-                     alt="down vote">
+            <a href="/dv/{{ snip.key }}" class="layer">
+                <img src="/static/img/down{% if snip.my_vote == -1 %}_over{% endif %}.jpg" alt="down vote">
             </a>
         </div>
         <span style="padding: 15px 5px;float:left;">

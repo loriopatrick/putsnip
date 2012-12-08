@@ -145,7 +145,6 @@ input {
 .vote {
     float: left;
     font-size: 12px;
-    width: 50px;
 }
 
 .vote .layer {
@@ -159,6 +158,13 @@ input {
 .stats {
     float: left;
     font-size: 12px;
+}
+
+.stats .up {
+    background-color: #ffd3d5;
+}
+.stats .down {
+    background-color: #d3f1ff;
 }
 
 .stats .box {
@@ -230,7 +236,13 @@ input {
     border-bottom: solid 3px #000000;
     padding-bottom: 5px;
     font-size: 14px;
+    overflow: hidden;
 }
+
+.closed {
+    height: 0;
+}
+
 .edge {
     border-bottom: solid 3px #000000;
     margin-bottom: 10px;

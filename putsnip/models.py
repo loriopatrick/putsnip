@@ -18,11 +18,14 @@ class Snip(models.Model):
     views = models.IntegerField(default=0)
 
     @staticmethod
-    def get_snip_by_points_query (pool='putsnip_snip', score='1', order='DESC'):
+    def get_snip_by_points_query (pool='putsnip_snip', nested_pool=False, score='1', order='DESC'):
         """
         sums votes with score of definable value for each snippet
         sorts by score
         """
+        if nested_pool:
+            pool = '(%s) uniqueTbl' % pool
+
         if score == '1':
             return '''
             SELECT * FROM %s INNER JOIN (
@@ -47,11 +50,14 @@ class Snip(models.Model):
         return '1 / ( UNIX_TIMESTAMP(now()) - UNIX_TIMESTAMP(datetime) )'
 
     @staticmethod
-    def get_trending (pool='putsnip_snip', order='DESC'):
+    def get_trending (pool='putsnip_snip', nested_pool=False, order='DESC'):
         """
         uses score of 1 / age to get trending
         """
-        return Snip.objects.raw(Snip.get_snip_by_points_query(pool=pool, order=order,
+        print Snip.get_snip_by_points_query(pool=pool, order=order,
+            score=Snip.get_trending_score_sql())
+
+        return Snip.objects.raw(Snip.get_snip_by_points_query(pool=pool, nested_pool=nested_pool, order=order,
             score=Snip.get_trending_score_sql()))
 
     @staticmethod
@@ -98,7 +104,7 @@ class Snip(models.Model):
             if sort == 'hot':
                 return Snip.get_trending(tag_query, order)
             if sort == 'points':
-                return Snip.objects.raw(Snip.get_snip_by_points_query(tag_query, order=order))
+                return Snip.objects.raw(Snip.get_snip_by_points_query(pool=tag_query, nested_pool=True, order=order))
             if sort == 'views' or sort == 'date':
                 return Snip.objects.raw(tag_query + (' ORDER BY %s %s' % (sort, order)))
         else:
@@ -127,6 +133,19 @@ class Snip(models.Model):
                 - Vote.objects.filter(snip=self.id, up=False).count(), 0)
         return self.points
 
+    def get_vote (self, usr, force=False):
+        if force or not hasattr(self, 'my_vote'):
+            vote = Vote.objects.filter(snip=self.id, usr=usr)
+
+            if vote.count() > 0:
+                vote = vote[0]
+                if vote.up:
+                    self.my_vote = 1
+                else:
+                    self.my_vote = -1
+            else:
+                self.my_vote = 0
+        return self.my_vote
 
     def vote(self, usr, up=True):
         """

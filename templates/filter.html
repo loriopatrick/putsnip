@@ -1,36 +1,70 @@
 {% extends 'main.html' %}
 {% block left %}
-    <div class="block filter">
-        {% if tag %}
-            <span class="tag">{{ tag }}</span>
-        {% elif usr %}
-            user: {{ usr }}
-        {% endif %}
-        <form action="#" method="GET">
-            <label>sort by
-                <select name="sort">
-                    <option {% if date %}selected="selected"{% endif %}>date</option>
-                    <option {% if points %}selected="selected"{% endif %}>points</option>
-                    <option {% if views %}selected="selected"{% endif %}>views</option>
-                </select>
-            </label>
-            {#        <label>within#}
-            {#            <select>#}
-            {#                <option>a day</option>#}
-            {#                <option>a week</option>#}
-            {#                <option selected="true">a month</option>#}
-            {#                <option>a year</option>#}
-            {#                <option>a life</option>#}
-            {#            </select>#}
-            {#        </label>#}
-            <label>in
-                <select name="order">
-                    <option value="asc" {% if asc %}selected="selected"{% endif %}>ascending order</option>
-                    <option value="desc" {% if desc %}selected="selected"{% endif %}>descending order</option>
-                </select>
-            </label>
-            <input type="submit" value="update"/>
-        </form>
-    </div>
-    {% include 'list.html' %}
+    <strong>Filter:</strong> <a href="#" id="hide_btn">show</a>
+    <script type="text/javascript">
+        $('#hide_btn').click(function () {
+            if ($('#hide_btn').html() == 'hide') {
+                $('#filter').height(0);
+                $('#hide_btn').html('show');
+            } else {
+                $('#filter').height('100%');
+                $('#hide_btn').html('hide');
+            }
+        });
+    </script>
+    <form action="#" method="GET">
+        <div id="filter" class="block filter closed" style="">
+            <br/>
+            <div style="float: left; width: 150px;">
+                <label class="block">
+                    <select name="at">
+                        <option {% if ht %}selected="selected"{% endif %} value="y">having tags:</option>
+                        <option {% if ct %}selected="selected"{% endif %} value="n">containing tags:</option>
+                    </select>
+                </label>
+                <label class="block">
+                    <input id="tags1" name="tags" value="{{ tags }}">
+                    <script type="text/javascript">
+                        $('#tags1').tagsInput({
+                            width:'100px',
+                            height:'20px'
+                        })
+                    </script>
+                </label>
+            </div>
+            <div style="float: left; width: 150px;">
+                <label style="float: left;"> submitted by<br/>
+                    <input type="text" name="usr" value="{{ usr }}" placeholder="ANYONE"/>
+                </label>
+            </div>
+
+            <div style="float: left; width: 200px;">
+                <label class="block">sorted in
+                    <select name="sort">
+                        <option {% if hot %}selected="selected"{% endif %} value="hot">trend</option>
+                        <option {% if points %}selected="selected"{% endif %}>points</option>
+                        <option {% if views %}selected="selected"{% endif %}>views</option>
+                        <option {% if date %}selected="selected"{% endif %} value="datetime">date</option>
+                    </select>
+                </label>
+                <label class="block">with
+                    <select name="or">
+                        <option value="a" {% if ASC %}selected="selected"{% endif %}>ascending order</option>
+                        <option value="d" {% if DESC %}selected="selected"{% endif %}>descending order</option>
+                    </select>
+                </label>
+            </div>
+
+            <div class="block"><br/>
+                <input type="submit" value="update"/>
+            </div>
+
+        </div>
+        {% include 'list.html' %}
+        <div class="block">
+            <input type="hidden" name="page" value="{{ page }}" />
+            <input type="submit" name="dir" value="previous" />
+            <input type="submit" name="dir" value="next" style="float: right;" />
+        </div>
+    </form>
 {% endblock %}
