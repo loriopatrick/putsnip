@@ -254,5 +254,10 @@ input {
 }
 
 body .syntaxhighlighter .line {
-    white-space: pre-wrap !important; /* make code wrap */
+    white-space: pre-wrap !important;
+}
+
+pre {
+    white-space: pre-wrap !important;
+    padding-right: 5px;
 }

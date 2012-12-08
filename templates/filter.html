@@ -15,6 +15,7 @@
     <form action="#" method="GET">
         <div id="filter" class="block filter closed" style="">
             <br/>
+
             <div style="float: left; width: 150px;">
                 <label class="block">
                     <select name="at">
@@ -44,7 +45,7 @@
                         <option {% if hot %}selected="selected"{% endif %} value="hot">trend</option>
                         <option {% if points %}selected="selected"{% endif %}>points</option>
                         <option {% if views %}selected="selected"{% endif %}>views</option>
-                        <option {% if date %}selected="selected"{% endif %} value="datetime">date</option>
+                        <option {% if datetime %}selected="selected"{% endif %} value="datetime">date</option>
                     </select>
                 </label>
                 <label class="block">with
@@ -62,9 +63,13 @@
         </div>
         {% include 'list.html' %}
         <div class="block">
-            <input type="hidden" name="page" value="{{ page }}" />
-            <input type="submit" name="dir" value="previous" />
-            <input type="submit" name="dir" value="next" style="float: right;" />
+            <input type="hidden" name="page" value="{{ page }}"/>
+            {% if page > 0 %}
+                <input type="submit" name="dir" value="previous"/>
+            {% endif %}
+            {% if snips|length > 0 %}
+                <input type="submit" name="dir" value="next" style="float: right;"/>
+            {% endif %}
         </div>
     </form>
 {% endblock %}

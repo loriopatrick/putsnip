@@ -1,7 +1,6 @@
 import base
 from django.db import models
-
-#todo: remove possibilities for sql injections in root sql construction methods
+import re
 
 class Snip(models.Model):
     """
@@ -34,7 +33,7 @@ class Snip(models.Model):
                 GROUP BY snip
                 ORDER BY score %s
             ) tbl on tbl.snip = id
-            ''' % (pool, order)
+            ''' % (pool, re.escape(order))
 
         return '''
         SELECT * FROM %s INNER JOIN (
@@ -43,7 +42,7 @@ class Snip(models.Model):
             GROUP BY snip
             ORDER BY score %s
         ) tbl on tbl.snip = id
-        ''' % (pool, score, order)
+        ''' % (pool, score, re.escape(order))
 
     @staticmethod
     def get_trending_score_sql ():
@@ -70,6 +69,8 @@ class Snip(models.Model):
         if all: requires snips to have connections to all tags
         appends order to end of query
         """
+        for x in range (0, len(tags)):
+            tags[x] = re.escape(tags[x])
         con = ''
         if all:
             con = 'HAVING COUNT(tag) = %s' % len(tags)
@@ -102,13 +103,13 @@ class Snip(models.Model):
                 return Snip.get_trending(tag_query, order)
             if sort == 'points':
                 return Snip.objects.raw(Snip.get_snip_by_points_query(pool=tag_query, nested_pool=True, order=order))
-            if sort == 'views' or sort == 'date':
+            if sort == 'views' or sort == 'datetime':
                 return Snip.objects.raw(tag_query + (' ORDER BY %s %s' % (sort, order)))
         else:
             if sort == 'hot' or sort == 'points':
                 con = ''
                 if len(user):
-                    con = ' WHERE usr="%s"' % user
+                    con = ' WHERE usr="%s"' % re.escape(user)
 
                 score = '1'
                 if sort == 'hot':
@@ -116,8 +117,8 @@ class Snip(models.Model):
 
                 return Snip.objects.raw(Snip.get_snip_by_points_query(score=score, order=order) + con)
 
-            if sort == 'views' or sort == 'date':
-                return Snip.objects.raw('SELECT * FROM putsnip_snip ORDER BY %s %s' % (sort, order))
+            if sort == 'views' or sort == 'datetime':
+                return Snip.objects.raw('SELECT * FROM putsnip_snip ORDER BY %s %s' % (sort, re.escape(order)))
 
     def get_points(self):
         """

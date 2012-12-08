@@ -5,7 +5,6 @@ from django.core.context_processors import csrf
 from django.db import IntegrityError
 from putsnip import models
 
-#todo: fix error: http://localhost:8080/?at=n&tags=&usr=&sort=datetime&or=a#
 
 def ready_context(request, current={}, post=False):
     current.update({
