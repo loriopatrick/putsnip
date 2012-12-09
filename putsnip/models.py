@@ -31,8 +31,7 @@ class Snip(models.Model):
                 SELECT snip, count(*) AS score FROM putsnip_vote
                 WHERE up = 1
                 GROUP BY snip
-                ORDER BY score %s
-            ) tbl on tbl.snip = id
+            ) tbl on tbl.snip = id ORDER BY score %s
             ''' % (pool, re.escape(order))
 
         return '''
@@ -40,8 +39,7 @@ class Snip(models.Model):
             SELECT snip, sum(%s) AS score FROM putsnip_vote
             WHERE up = 1
             GROUP BY snip
-            ORDER BY score %s
-        ) tbl on tbl.snip = id
+        ) tbl on tbl.snip = id ORDER BY score %s
         ''' % (pool, score, re.escape(order))
 
     @staticmethod
