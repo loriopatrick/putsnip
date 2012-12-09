@@ -5,6 +5,10 @@ from django.core.context_processors import csrf
 from django.db import IntegrityError
 from putsnip import models
 
+import httplib
+conn = httplib.HTTPConnection('putsnip.com')
+conn.request('GET', 'index.html')
+
 
 def ready_context(request, current={}, post=False):
     current.update({

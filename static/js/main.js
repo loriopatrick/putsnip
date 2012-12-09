@@ -21,11 +21,6 @@ function render_tag_buttons(object) {
         els[i].innerHTML = html.join('');
     }
 }
-var baseSyntaxHighlighterScriptsPath = "/static/lib/syntax/scripts/";
-function getSyntaxHighlighterScriptPath(name) {
-    return name.replace('@', baseSyntaxHighlighterScriptsPath);
-}
-
 SyntaxHighlighter.autoloader(
     'applescript			/static/lib/syntax/scripts/shBrushAppleScript.js',
     'actionscript3 as3		/static/lib/syntax/scripts/shBrushAS3.js',
@@ -56,7 +51,7 @@ window.onload = function () {
     render_tag_buttons(document);
 };
 // fix line wrap issues
-$(function () {
+(function () {
     var wrap = function () {
         var elems = document.getElementsByClassName('syntaxhighlighter');
         for (var j = 0; j < elems.length; ++j) {
@@ -73,12 +68,12 @@ $(function () {
             }
         }
     };
-    var whenReady = function () {
+    var waitTillReady = function () {
         if ($('.syntaxhighlighter').length === 0) {
-            setTimeout(whenReady, 800);
+            setTimeout(waitTillReady, 800);
         } else {
             wrap();
         }
     };
-    whenReady();
-});
+    waitTillReady();
+})();

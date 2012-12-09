@@ -12,7 +12,7 @@
         var container = document.getElementById('pop_tags');
         var items = Array.prototype.slice.call(container.children).splice(0);
         var max_size = 0;
-        var target_max = 60;
+        var target_max = 20;
         var l = items.length - 1;
         var i = 0;
 
@@ -42,12 +42,6 @@
             var size = parseInt(child.style
                     .fontSize.replace('px', ''));
             child.style.fontSize = target_max * size / max_size + 'px';
-//            var temp = items[i];
-//            items[i] = items[r];
-//            items[r] = temp;
-        }
-        for (i = 0; i < items.length; ++i) {
-//            container.appendChild(items[i]);
         }
     })();
 </script>
