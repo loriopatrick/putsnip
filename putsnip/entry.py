@@ -120,7 +120,7 @@ def filter(request):
     sort = {'hot': 'hot',
             'points': 'points',
             'views': 'views',
-            'datetime': 'datetime'}[get('sort', 'hot')]
+            'datetime': 'datetime'}[get('sort', 'datetime')]
 
     order = {'d': 'DESC', 'a': 'ASC'}[get('or', 'd')]
 
