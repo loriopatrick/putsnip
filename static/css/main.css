@@ -47,6 +47,11 @@ a:visited {
     float: left;
 }
 
+.search {
+    float: right;
+    margin: -5px 10px 10px  0;
+}
+
 #right {
     width: 250px;
     overflow: hidden;
@@ -226,6 +231,7 @@ input {
     float: right;
     font-size: 12px;
     font-weight: normal;
+    padding: 5px 10px;
 }
 
 .user a {

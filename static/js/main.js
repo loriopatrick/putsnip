@@ -77,3 +77,7 @@ window.onload = function () {
     };
     waitTillReady();
 })();
+function runSearch () {
+    window.open('http://google.com/search?q=' + document.searchForm.q.value + ' site:putsnip.com', '_blank');
+    return false;
+}

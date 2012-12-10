@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/html">
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <title>{{ title }} | putsnip |</title>
     <script type="text/javascript" src="/static/js/jquery-1.8.3.min.js"></script>
 
@@ -21,10 +21,13 @@
         _gaq.push(['_setAccount', 'UA-36933330-1']);
         _gaq.push(['_setDomainName', 'putsnip.com']);
         _gaq.push(['_trackPageview']);
-        (function() {
-            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        (function () {
+            var ga = document.createElement('script');
+            ga.type = 'text/javascript';
+            ga.async = true;
             ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(ga, s);
         })();
     </script>
 </head>
@@ -37,6 +40,15 @@
         <a href="/add" id="add_btn" onmouseover="$('#msg').html('Add Snippet');"
            onmouseout="$('#msg').html('');"></a>
 
+
+        <div class="search">
+            <form name="searchForm" onsubmit="return runSearch();">
+                <label style="font-size: 12px; font-weight: normal;">
+                    <input id="search" type="text" name="q" placeholder="search"/>
+                </label>
+                <input type="submit" value="go"/>
+            </form>
+        </div>
         <div class="user">
             {% if ac %}
                 <a href="/u/{{ ac.usr }}">{{ ac.usr }}</a> ::
@@ -47,6 +59,7 @@
         </div>
         <div id="msg" class="mini_info"></div>
     </div>
+
 
     <div id="left">
         {% block left %}{% endblock %}
