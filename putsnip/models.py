@@ -29,7 +29,6 @@ class Snip(models.Model):
             return '''
             SELECT * FROM %s INNER JOIN (
                 SELECT snip, count(*) AS score FROM putsnip_vote
-                WHERE up = 1
                 GROUP BY snip
             ) tbl on tbl.snip = id ORDER BY score %s, views DESC
             ''' % (pool, re.escape(order))
@@ -37,14 +36,13 @@ class Snip(models.Model):
         return '''
         SELECT * FROM %s INNER JOIN (
             SELECT snip, sum(%s) AS score FROM putsnip_vote
-            WHERE up = 1
             GROUP BY snip
         ) tbl on tbl.snip = id ORDER BY score %s, views DESC
         ''' % (pool, score, re.escape(order))
 
     @staticmethod
     def get_trending_score_sql ():
-        return '1 / ( UNIX_TIMESTAMP(now()) - UNIX_TIMESTAMP(datetime) )'
+        return 'up / ( UNIX_TIMESTAMP(now()) - UNIX_TIMESTAMP(datetime) )'
 
     @staticmethod
     def get_trending (pool='putsnip_snip', nested_pool=False, order='DESC'):
