@@ -17,7 +17,7 @@ class Snip(models.Model):
     views = models.IntegerField(default=0)
 
     @staticmethod
-    def get_snip_by_points_query (pool='putsnip_snip', nested_pool=False, score='1', order='DESC'):
+    def get_snip_by_points_query (pool='putsnip_snip', nested_pool=False, score='1', order='DESC', where=''):
         """
         sums votes with score of definable value for each snippet
         sorts by score
@@ -30,15 +30,15 @@ class Snip(models.Model):
             SELECT * FROM %s INNER JOIN (
                 SELECT snip, count(*) AS score FROM putsnip_vote
                 GROUP BY snip
-            ) tbl on tbl.snip = id ORDER BY score %s, views DESC
-            ''' % (pool, re.escape(order))
+            ) tbl on tbl.snip = id %s ORDER BY score %s, views DESC
+            ''' % (pool, where, re.escape(order))
 
         return '''
         SELECT * FROM %s INNER JOIN (
             SELECT snip, sum(%s) AS score FROM putsnip_vote
             GROUP BY snip
-        ) tbl on tbl.snip = id ORDER BY score %s, views DESC
-        ''' % (pool, score, re.escape(order))
+        ) tbl on tbl.snip = id %s ORDER BY score %s, views DESC
+        ''' % (pool, score, where, re.escape(order))
 
     @staticmethod
     def get_trending_score_sql ():
@@ -94,7 +94,7 @@ class Snip(models.Model):
         if tags:
             tag_query = Snip.get_snip_by_tag_query(tags, all_tags)
             if len(user):
-                tag_query += ' AND usr="%s"' % user
+                tag_query += ' AND usr="%s"' % re.escape(user)
             if sort == 'hot':
                 return Snip.get_trending(tag_query, order)
             if sort == 'points':
@@ -102,19 +102,19 @@ class Snip(models.Model):
             if sort == 'views' or sort == 'datetime':
                 return Snip.objects.raw(tag_query + (' ORDER BY %s %s' % (sort, order)))
         else:
-            if sort == 'hot' or sort == 'points':
-                con = ''
-                if len(user):
-                    con = ' WHERE usr="%s"' % re.escape(user)
+            con = ''
+            if len(user):
+                con = ' WHERE usr="%s"' % re.escape(user)
 
+            if sort == 'hot' or sort == 'points':
                 score = '1'
                 if sort == 'hot':
                     score = Snip.get_trending_score_sql()
 
-                return Snip.objects.raw(Snip.get_snip_by_points_query(score=score, order=order) + con)
+                return Snip.objects.raw(Snip.get_snip_by_points_query(score=score, order=order, where=con))
 
             if sort == 'views' or sort == 'datetime':
-                return Snip.objects.raw('SELECT * FROM putsnip_snip ORDER BY %s %s' % (sort, re.escape(order)))
+                return Snip.objects.raw('SELECT * FROM putsnip_snip %s ORDER BY %s %s' % (con, sort, re.escape(order)))
 
     def get_points(self):
         """

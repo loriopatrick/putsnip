@@ -45,7 +45,7 @@ def snippet(request, key):
         snip.get_vote(usr=ac.id)
 
     return render_to_response('snippet.html',
-        ready_context(request, {'snip': snip}))
+        ready_context(request, {'snip': snip, 'title':snip.title}))
 
 
 def unique(seq):
@@ -123,11 +123,12 @@ def filter(request):
             'datetime': 'datetime'}[get('sort', 'hot')]
 
     order = {'d': 'DESC', 'a': 'ASC'}[get('or', 'd')]
+    user = get('usr', '')
 
     c['snips'] = models.Snip.super_filter(
         tags=split(get('tags', None)),
         all_tags=get('at', 'n') == 'y',
-        user=get('usr', ''),
+        user=user,
         sort=sort,
         order=order
     )[items * page:items * (page + 1)]
@@ -136,10 +137,11 @@ def filter(request):
 
     c.update({
         'tags': get('tags', ''),
-        'usr': get('usr', ''),
+        'usr': user,
         sort: '1',
         order: '1',
-        'page': page
+        'page': page,
+        'title': (get('tags', '') + ' ' + user)
     })
 
     if get('at', 'n') == 'y':
